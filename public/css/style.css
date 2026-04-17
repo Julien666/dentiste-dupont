@@ -1,0 +1,131 @@
+/* Couleurs et Polices */
+:root {
+    --medical-blue: #00a8cc;
+    --dark-navy: #27496d;
+    --clean-white: #ffffff;
+    --light-gray: #f4f7f6;
+}
+
+/* 1. On force le body à prendre au moins toute la hauteur de l'écran */
+body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* vh = viewport height (hauteur de l'écran) */
+    font-family: 'Segoe UI', sans-serif;
+    background-color: var(--light-gray);
+}
+
+/* Header & Nav */
+header {
+    background: var(--dark-navy);
+    /* On met 10px en haut/bas et 0 sur les côtés car c'est le 'nav' qui gérera l'espacement interne */
+    padding: 10px 0; 
+    color: white;
+    width: 100%;
+}
+
+/* --- NAVIGATION --- */
+nav {
+    display: flex;
+    justify-content: space-between; /* Pousse les éléments aux extrémités */
+    align-items: center;
+    width: 100%;           /* Utilise toute la largeur */
+    padding: 10px 40px;    /* 40px de marge sur les côtés pour ne pas toucher le bord de l'écran */
+    box-sizing: border-box; /* Pour que le padding ne crée pas de barre de défilement */
+}
+
+nav ul {
+    display: flex;       /* Aligne les <li> en ligne */
+    list-style: none;    /* Supprime les points noirs */
+    gap: 25px;           /* Espace entre chaque lien */
+    margin: 0;
+    padding: 0;
+}
+
+/* On garde tes styles 'nav a' mais en les purgeant du superflu */
+nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: all 0.3s ease; /* Animation fluide pour le hover */
+}
+
+/* On garde le 'nav a:hover' pour l'effet visuel */
+nav a:hover {
+    background-color: var(--medical-blue);
+    color: white;
+}
+
+/* Contenu Principal */
+/* 2. On dit au contenu principal (main) de "pousser" et prendre tout l'espace disponible */
+main {
+    flex: 1; /* C'est cette ligne magique qui pousse le footer en bas */
+    max-width: 1200px;
+    margin: 40px auto;
+    width: 90%;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+h1 {
+    color: var(--dark-navy);
+    font-size: 2.5rem;
+}
+
+.status-success {
+    background: #d4edda;
+    color: #155724;
+    padding: 10px;
+    border-radius: 5px;
+    display: inline-block;
+    margin-top: 20px;
+}
+
+/* Footer */
+/* 3. Ton footer restera maintenant toujours en bas */
+footer {
+    background: #eee;
+    padding: 20px;
+    text-align: center;
+}
+
+/* --- STYLE DU LOGO --- */
+.logo a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: none !important; /* On retire le fond bleu au survol pour le logo */
+}
+
+.logo a span {
+    font-family: 'Arial Black', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: white;
+}
+
+/* On évite que le logo change de couleur comme les liens classiques */
+.logo a:hover {
+    background: none;
+    color: var(--medical-blue);
+}
+
+.rdv-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.card {
+    padding: 20px;
+    border: 1px dashed #ccc;
+    text-align: center;
+    border-radius: 8px;
+    color: #666;
+}
