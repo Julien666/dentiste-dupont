@@ -1,4 +1,6 @@
 <?php
+// On laisse la vérification de session au cas où le header soit inclus 
+// mais normalement l'index.php s'en occupe déjà.
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -16,32 +18,32 @@ if (session_status() === PHP_SESSION_NONE) {
 <header>
     <nav>
         <div class="logo">
-            <a href="/dentiste-dupont/public/index.php" style="font-size: 1.5rem; background: none; padding: 0;">
-                🦷 <span>Dr. Dupont</span>
+            <a href="index.php?page=home" style="font-size: 1.5rem; background: none; padding: 0;">
+                 <span>Dr. Dupont</span>
             </a>
         </div>
 
         <ul>
-            <li><a href="/dentiste-dupont/public/index.php">Accueil</a></li>
+            <li><a href="index.php?page=home">Accueil</a></li>
 
             <?php if (isset($_SESSION['user_id'])): ?>
                 <?php if ($_SESSION['user_role'] === 'admin'): ?>
-                    <li><a href="/dentiste-dupont/app/views/back/dashboard.php">Agenda Docteur</a></li>
-                    <li><a href="/dentiste-dupont/app/views/back/liste-patients.php">Gestion Patients</a></li> 
+                    <li><a href="index.php?page=dashboard">Agenda Docteur</a></li>
+                    <li><a href="index.php?page=patients">Gestion Patients</a></li> 
                 <?php else: ?>
-                    <li><a href="/dentiste-dupont/app/views/front/mes-rdv.php">Mes RDV</a></li>
-                    <li><a href="/dentiste-dupont/app/views/front/prendre-rdv.php">Prendre RDV</a></li>
+                    <li><a href="index.php?page=mes-rdv">Mes RDV</a></li>
+                    <li><a href="index.php?page=prendre-rdv">Prendre RDV</a></li>
                 <?php endif; ?>
 
                 <li style="padding: 10px; color: #fff; font-size: 0.9rem;">
                     👤 <?php echo htmlspecialchars($_SESSION['user_nom']); ?>
                 </li>
 
-                <li><a href="/dentiste-dupont/app/controllers/LogoutController.php" style="background: #e74c3c; border-radius: 5px;">Déconnexion</a></li>
+                <li><a href="index.php?page=logout" style="background: #e74c3c; border-radius: 5px;">Déconnexion</a></li>
 
             <?php else: ?>
-                <li><a href="/dentiste-dupont/app/views/login.php">Connexion</a></li>
-                <li><a href="/dentiste-dupont/app/views/register.php">Inscription</a></li>
+                <li><a href="index.php?page=login">Connexion</a></li>
+                <li><a href="index.php?page=register">Inscription</a></li>
             <?php endif; ?>
         </ul>
     </nav>

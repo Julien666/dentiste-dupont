@@ -1,18 +1,19 @@
 <?php 
-require_once '../includes/auth_guard.php';
+// 1. On utilise ROOT_PATH pour les inclusions de sécurité et d'interface
+require_once ROOT_PATH . '/app/views/includes/auth_guard.php';
 protect_page('patient'); 
 
-require_once '../includes/header.php'; 
-require_once '../../../config/db.php'; 
+require_once ROOT_PATH . '/app/views/includes/header.php'; 
 
+// 2. $pdo est déjà chargé par l'index, mais on s'assure de sa disponibilité
 $user_id = $_SESSION['user_id'];
 
-// 1. On récupère les rendez-vous futurs (ceux qui sont 'prévu')
+// 3. On récupère les rendez-vous futurs (ceux qui sont 'prévu')
 $query = $pdo->prepare("SELECT * FROM appointments WHERE user_id = ? AND status = 'prévu' ORDER BY date_rdv ASC");
 $query->execute([$user_id]);
 $appointments = $query->fetchAll();
 
-// 2. On récupère l'historique (ceux qui sont 'effectué')
+// 4. On récupère l'historique (ceux qui sont 'effectué')
 $query_hist = $pdo->prepare("SELECT * FROM appointments WHERE user_id = ? AND status = 'effectué' ORDER BY date_rdv DESC");
 $query_hist->execute([$user_id]);
 $history = $query_hist->fetchAll();
@@ -29,18 +30,18 @@ $history = $query_hist->fetchAll();
     <section class="rdv-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3>🗓️ Mes prochains rendez-vous</h3>
-            <a href="prendre-rdv.php" class="btn-submit" style="width: auto; text-decoration: none; padding: 8px 15px;">+ Prendre RDV</a>
+            <a href="index.php?page=prendre-rdv" class="btn-submit" style="width: auto; text-decoration: none; padding: 8px 15px;">+ Prendre RDV</a>
         </div>
         
         <?php if (count($appointments) > 0): ?>
             <div class="appointments-grid">
                 <?php foreach ($appointments as $rdv): ?>
-                    <div class="card" style="border: 1px solid #ddd; border-left: 5px solid var(--medical-blue); text-align: left; margin-bottom: 15px; position: relative; padding: 15px;">
+                    <div class="card" style="border: 1px solid #ddd; border-left: 5px solid #3498db; text-align: left; margin-bottom: 15px; position: relative; padding: 15px;">
                         <p><strong>Date :</strong> <?php echo date('d/m/Y', strtotime($rdv['date_rdv'])); ?></p>
                         <p><strong>Heure :</strong> <?php echo substr($rdv['heure_rdv'], 0, 5); ?></p>
                         <p><strong>Motif :</strong> <?php echo htmlspecialchars($rdv['description']) ?: 'Non précisé'; ?></p>
                         
-                        <a href="../../controllers/CancelAppointmentController.php?id=<?php echo $rdv['id']; ?>" 
+                        <a href="index.php?page=cancel-rdv&id=<?php echo $rdv['id']; ?>" 
                            onclick="return confirm('Annuler ce rendez-vous ?')"
                            style="color: #e74c3c; font-size: 0.8rem; text-decoration: none; position: absolute; top: 10px; right: 10px;">
                            ❌ Annuler
@@ -59,7 +60,7 @@ $history = $query_hist->fetchAll();
         <h3>🦷 Mon historique de soins</h3>
         <table style="width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 8px; overflow: hidden;">
             <thead>
-                <tr style="background: var(--dark-navy); color: white;">
+                <tr style="background: #2c3e50; color: white;">
                     <th style="padding: 12px; text-align: left;">Date</th>
                     <th style="padding: 12px; text-align: left;">Soin effectué</th>
                     <th style="padding: 12px; text-align: left;">Praticien</th>
@@ -84,4 +85,4 @@ $history = $query_hist->fetchAll();
     </section>
 </main>
 
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once ROOT_PATH . '/app/views/includes/footer.php'; ?>

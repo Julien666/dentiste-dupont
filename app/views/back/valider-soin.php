@@ -1,30 +1,44 @@
 <?php 
-require_once '../includes/auth_guard.php';
-protect_page('admin'); // Sécurité : seul l'admin peut voir cette page
+require_once ROOT_PATH . '/app/views/includes/auth_guard.php';
+protect_page('admin'); 
 
-require_once '../includes/header.php'; 
+require_once ROOT_PATH . '/app/views/includes/header.php'; 
+
+// Récupération de l'ID du RDV
+$id_rdv = $_GET['id'] ?? null;
+
+if (!$id_rdv) {
+    die("ID du rendez-vous manquant.");
+}
+
+// Récupérer les détails du RDV pour savoir de quel patient on parle
+$stmt = $pdo->prepare("SELECT a.*, u.nom, u.prenom FROM appointments a JOIN users u ON a.user_id = u.id WHERE a.id = ?");
+$stmt->execute([$id_rdv]);
+$rdv = $stmt->fetch();
+
+if (!$rdv) {
+    die("Rendez-vous introuvable.");
+}
 ?>
 
 <main>
-    <div class="form-container" style="max-width: 600px; margin: 50px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-        <h2 style="color: var(--dark-navy); margin-bottom: 20px;">🩺 Valider le soin</h2>
-        
-        <form action="/dentiste-dupont/app/controllers/CompleteAppointmentController.php" method="POST">
-            <input type="hidden" name="appointment_id" value="<?php echo htmlspecialchars($_GET['id']); ?>">
-            
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Compte-rendu de l'intervention :</label>
-                <textarea name="notes_soin" rows="6" required 
-                          placeholder="Ex: Détartrage effectué, pas de caries détectées. Prévoir contrôle dans 6 mois."
-                          style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit;"></textarea>
+    <div class="form-container">
+        <h2>Valider le soin</h2>
+        <p>Patient : <strong><?php echo htmlspecialchars($rdv['nom'] . ' ' . $rdv['prenom']); ?></strong></p>
+        <p>Date : <?php echo date('d/m/Y', strtotime($rdv['date_rdv'])); ?></p>
+
+        <form action="index.php?page=complete-soin" method="POST">
+            <input type="hidden" name="id_rdv" value="<?php echo $rdv['id']; ?>">
+
+            <div class="form-group">
+                <label for="notes_soin">Soin effectué / Observations :</label>
+                <textarea name="notes_soin" id="notes_soin" rows="5" required placeholder="Ex: Détartrage complet et vérification carie molaire gauche..."></textarea>
             </div>
 
-            <div style="display: flex; gap: 10px;">
-                <button type="submit" class="btn-submit" style="flex: 2;">✅ Enregistrer et marquer comme terminé</button>
-                <a href="dashboard.php" style="flex: 1; text-align: center; text-decoration: none; background: #95a5a6; color: white; padding: 12px; border-radius: 5px;">Annuler</a>
-            </div>
+            <button type="submit" class="btn-submit">Marquer comme terminé</button>
+            <a href="index.php?page=dashboard" style="display: block; text-align: center; margin-top: 10px; color: #666; text-decoration: none;">Annuler</a>
         </form>
     </div>
 </main>
 
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once ROOT_PATH . '/app/views/includes/footer.php'; ?>

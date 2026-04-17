@@ -1,20 +1,18 @@
 <?php
-session_start();
-require_once '../../config/db.php';
-require_once '../models/User.php';
+// On retire session_start() et les require de config/db car index.php s'en occupe déjà
 
 // 1. On vérifie que des données ont été envoyées via le formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
-    // 2. On récupère les données et on nettoie les espaces
+    // 2. On récupère les données
     $email = trim($_POST['email']);
     $password = $_POST['password'];
 
-    // 3. On appelle le Modèle User pour chercher l'utilisateur par son email
+    // 3. On appelle le Modèle User (le require_once est fait dans l'index)
     $userModel = new User($pdo);
     $user = $userModel->findByEmail($email);
 
-    // 4. On vérifie si l'utilisateur existe ET si le mot de passe correspond au hash
+    // 4. On vérifie si l'utilisateur existe ET si le mot de passe est correct
     if ($user && password_verify($password, $user['password'])) {
         
         // Succès : On remplit la session
@@ -22,20 +20,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_nom'] = $user['nom'];
         $_SESSION['user_role'] = $user['role'];
 
-        // Redirection selon le rôle
+        // REDIRECTION VIA L'INDEX SELON LE RÔLE
         if ($user['role'] === 'admin') {
-            header('Location: ../views/back/dashboard.php');
+            header('Location: index.php?page=dashboard');
         } else {
-            header('Location: ../views/front/mes-rdv.php');
+            header('Location: index.php?page=mes-rdv');
         }
         exit();
     } else {
-        // Échec : Redirection vers le login avec un message d'erreur
-        header('Location: ../views/login.php?error=invalid');
+        // ÉCHEC : Redirection vers la route login de l'index
+        header('Location: index.php?page=login&error=invalid');
         exit();
     }
 } else {
-    // Si quelqu'un essaie d'accéder au fichier sans formulaire, on le renvoie à l'accueil
-    header('Location: ../../public/index.php');
+    // Si accès direct sans POST, retour à l'accueil
+    header('Location: index.php?page=home');
     exit();
 }
