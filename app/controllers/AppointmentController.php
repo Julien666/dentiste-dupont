@@ -1,41 +1,49 @@
 <?php
 /**
- * CancelAppointmentController.php
- * Ce fichier est appelé par l'index.php via require_once
+ * AppointmentController.php
+ * Gère l'enregistrement d'un nouveau rendez-vous
  */
 
-// 1. Sécurité : Vérifier si l'utilisateur est bien connecté
-// (La session est déjà active grâce à l'index)
+// 1. Sécurité : Vérifier si l'utilisateur est connecté
 if (!isset($_SESSION['user_id'])) {
     header('Location: index.php?page=login');
     exit();
 }
 
-$id_rdv = $_GET['id'] ?? null;
-$user_id = $_SESSION['user_id'];
-$user_role = $_SESSION['user_role'];
-
-if ($id_rdv) {
-    // 2. Préparation de la requête de suppression
-    // $pdo est déjà disponible car chargé par l'index
+// 2. Vérifier que le formulaire a été envoyé en POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
-    if ($user_role === 'patient') {
-        // Un patient ne peut supprimer que son propre RDV
-        $stmt = $pdo->prepare("DELETE FROM appointments WHERE id = ? AND user_id = ?");
-        $stmt->execute([$id_rdv, $user_id]);
-    } 
-    else if ($user_role === 'admin') {
-        // Un admin peut supprimer n'importe quel RDV
-        $stmt = $pdo->prepare("DELETE FROM appointments WHERE id = ?");
-        $stmt->execute([$id_rdv]);
+    // Récupération des données du formulaire
+    $user_id     = $_SESSION['user_id'];
+    $date_rdv    = $_POST['date_rdv'];
+    $heure_rdv   = $_POST['heure_rdv'];
+    $description = htmlspecialchars($_POST['description']); // Protection XSS
+    $status      = 'prévu'; // Statut par défaut
+
+    try {
+        // 3. Préparation de la requête SQL
+        // On n'insère pas created_at car MySQL le gère seul avec CURRENT_TIMESTAMP
+        // On n'insère pas notes_soin car il est vide au départ (NULL)
+        $sql = "INSERT INTO appointments (user_id, date_rdv, heure_rdv, description, status) 
+                VALUES (?, ?, ?, ?, ?)";
+        
+        $stmt = $pdo->prepare($sql);
+        
+        if ($stmt->execute([$user_id, $date_rdv, $heure_rdv, $description, $status])) {
+            // Succès : redirection vers la liste des rendez-vous
+            header('Location: index.php?page=mes-rdv&success=1');
+            exit();
+        } else {
+            echo "Une erreur est survenue lors de l'enregistrement.";
+        }
+
+    } catch (PDOException $e) {
+        // En cas d'erreur SQL (ex: colonne mal nommée)
+        die("Erreur de base de données : " . $e->getMessage());
     }
 
-    // 3. Redirection intelligente selon le rôle
-    $redirect = ($user_role === 'admin') ? 'dashboard' : 'mes-rdv';
-    header("Location: index.php?page=$redirect&success=cancelled");
-    exit();
 } else {
-    // Si pas d'ID, on renvoie à l'accueil
-    header('Location: index.php?page=home');
+    // Si on tente d'accéder au contrôleur sans formulaire
+    header('Location: index.php?page=prendre-rdv');
     exit();
 }
