@@ -32,6 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $update = $pdo->prepare("UPDATE news SET titre = ?, contenu = ?, image_url = ? WHERE id = ?");
     $update->execute([$titre, $contenu, $image_name, $id]);
 
-    header('Location: index.php?page=admin-news&success=updated');
+    header('Location: index.php?page=gestion-news&success=updated');
     exit();
 }

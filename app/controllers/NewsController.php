@@ -27,6 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare("INSERT INTO news (titre, contenu, image_url) VALUES (?, ?, ?)");
     $stmt->execute([$titre, $contenu, $image_name]);
 
-    header('Location: index.php?page=admin-news&success=added');
+    header('Location: index.php?page=gestion-news&success=added');
     exit();
 }

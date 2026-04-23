@@ -1,0 +1,1 @@
+console.log("Le fichier JS est bien chargé !");

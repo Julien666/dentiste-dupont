@@ -3,71 +3,75 @@ require_once ROOT_PATH . '/app/views/includes/auth_guard.php';
 protect_page('admin');
 require_once ROOT_PATH . '/app/views/includes/header.php'; 
 
-// Récupérer les services existants
 $services = $pdo->query("SELECT * FROM services ORDER BY nom ASC")->fetchAll();
 ?>
 
-<main>
-    <div class="dashboard-header">
-        <h2>🦷 Gestion des Services</h2>
-        <p>Gérez les prestations proposées par le cabinet.</p>
+<main class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="fw-bold">⚙️ Gestion des Services</h1>
+            <p class="text-muted">Configurez les prestations et les tarifs de votre cabinet.</p>
+        </div>
+        <div class="text-end">
+            <a href="index.php?page=add-service" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                + Nouveau Service
+            </a>
+        </div>
     </div>
 
-    <section class="admin-section">
-        <?php if (isset($_GET['success'])): ?>
-            <p style="color: #27ae60; background: #eafaf1; padding: 10px; border-radius: 5px;">✅ Service ajouté avec succès !</p>
-        <?php endif; ?>
-
-        <div class="card" style="padding: 20px; margin-bottom: 30px; background: #f4f7f6; border-radius: 8px;">
-            <h4>Ajouter un nouveau service</h4>
-            <form action="index.php?page=add-service" method="POST" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
-                <div style="flex: 2;">
-                    <label style="display:block; font-size: 0.8rem;">Nom du soin</label>
-                    <input type="text" name="nom_service" placeholder="Ex: Détartrage" required style="width: 100%; padding: 8px;">
-                </div>
-                <div style="flex: 1;">
-                    <label style="display:block; font-size: 0.8rem;">Prix (€)</label>
-                    <input type="number" name="prix" placeholder="0.00" step="0.01" required style="width: 100%; padding: 8px;">
-                </div>
-                <div style="flex: 1;">
-                    <label style="display:block; font-size: 0.8rem;">Durée (min)</label>
-                    <input type="number" name="duree" value="30" style="width: 100%; padding: 8px;">
-                </div>
-                <button type="submit" class="btn-submit" style="width: auto; height: 38px;">➕ Ajouter</button>
-            </form>
+    <div class="card border-0 shadow-lg rounded-5 overflow-hidden">
+        <div class="bg-white p-4 border-bottom">
+            <h4 class="fw-bold mb-0">Catalogue des soins</h4>
         </div>
-
-        <table class="admin-table" style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <thead>
-                <tr style="background: #2c3e50; color: white;">
-                    <th style="padding: 12px; text-align: left;">Nom</th>
-                    <th style="padding: 12px; text-align: left;">Prix</th>
-                    <th style="padding: 12px; text-align: center;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (empty($services)): ?>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
                     <tr>
-                        <td colspan="3" style="padding: 20px; text-align: center; color: #7f8c8d;">Aucun service enregistré pour le moment.</td>
+                        <th class="ps-4">NOM DU SOIN / DESCRIPTION</th>
+                        <th>DURÉE ESTIMÉE</th>
+                        <th>TARIF</th>
+                        <th class="text-end pe-4">ACTIONS</th>
                     </tr>
-                <?php else: ?>
-                    <?php foreach ($services as $s): ?>
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 12px;"><strong><?php echo htmlspecialchars($s['nom']); ?></strong></td>
-                        <td style="padding: 12px;"><?php echo number_format($s['prix'], 2); ?> €</td>
-                        <td style="padding: 12px; text-align: center;">
-                            <a href="index.php?page=delete-service&id=<?php echo $s['id']; ?>" 
-                               onclick="return confirm('Supprimer ce service ?')" 
-                               style="color: #e74c3c; text-decoration: none; font-weight: bold;">
-                               🗑️ Supprimer
-                            </a>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </section>
+                </thead>
+                <tbody>
+                    <?php if (empty($services)): ?>
+                        <tr><td colspan="4" class="text-center py-5 text-muted">Aucun service configuré.</td></tr>
+                    <?php else: ?>
+                        <?php foreach ($services as $s): ?>
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark"><?php echo htmlspecialchars($s['nom'] ?? 'Sans nom'); ?></div>
+                                <?php if (!empty($s['description'])): ?>
+                                    <div class="text-muted small italic" style="max-width: 300px;"><?php echo htmlspecialchars($s['description']); ?></div>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark rounded-pill border">
+                                    <i class="far fa-clock me-1"></i> 
+                                    <?= htmlspecialchars($s['duree_minutes'] ?? 0); ?> min
+                                </span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-primary">
+                                    <?php echo number_format((float)($s['prix'] ?? 0), 2); ?> €
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="index.php?page=edit-service&id=<?php echo $s['id']; ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3">Modifier</a>
+                                <a href="index.php?page=delete-service&id=<?php echo $s['id']; ?>" onclick="return confirm('Supprimer ce service ?')" class="btn btn-sm btn-outline-danger rounded-pill px-3 ms-2">🗑️</a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </main>
+
+<style>
+.table-hover tbody tr:hover { background-color: rgba(52, 152, 219, 0.02); transition: background-color 0.2s ease; }
+.italic { font-style: italic; }
+</style>
 
 <?php require_once ROOT_PATH . '/app/views/includes/footer.php'; ?>

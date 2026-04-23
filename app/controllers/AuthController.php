@@ -18,7 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Succès : On remplit la session
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_nom'] = $user['nom'];
+        $_SESSION['role'] = $user['role'];
         $_SESSION['user_role'] = $user['role'];
+        
 
         // REDIRECTION VIA L'INDEX SELON LE RÔLE
         if ($user['role'] === 'admin') {
