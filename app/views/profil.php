@@ -37,8 +37,8 @@ $prochain_rdv = $nextRdvQuery->fetch();
                     <?= strtoupper(substr($user['nom'], 0, 1)) ?>
                 </div>
                 <h3 class="fw-bold"><?= htmlspecialchars($user['prenom'] . ' ' . $user['nom']) ?></h3>
-                <p class="text-muted">Patient depuis <?= date('Y', strtotime($user['date_inscription'] ?? date('Y-m-d'))) ?></p>
-                
+                <p class="text-muted"><?php if ($user['role'] === 'admin'): ?>Administrateur du système<?php else: ?>Patient depuis <?= date('Y', strtotime($user['date_inscription'] ?? date('Y-m-d'))) ?></p>
+                   <?php endif; ?>
                 <hr class="my-4 opacity-50">
                 
                 <div class="row mb-4">

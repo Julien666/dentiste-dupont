@@ -37,7 +37,7 @@ $aujourdhui = $jours_fr[date('l')];
             <div class="col-lg-6">
                 <h1 class="display-3 fw-bold mb-4">L'excellence au service de votre <span class="text-primary">sourire</span>.</h1>
                 <p class="lead mb-5">Un cadre moderne pour des soins dentaires d'exception.</p>
-                <a href="index.php?page=prendre-rdv" class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow">Prendre rendez-vous</a>
+                <a href="index.php?page=login" class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow">Prendre rendez-vous</a>
             </div>
         </div>
     </section>

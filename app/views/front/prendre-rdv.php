@@ -1,31 +1,31 @@
 <?php 
 require_once ROOT_PATH . '/app/views/includes/header.php'; 
 
-// 1. Récupération des motifs (Services)
-$stmt_services = $pdo->query("SELECT nom FROM services ORDER BY nom ASC");
-$motifs = $stmt_services->fetchAll(PDO::FETCH_COLUMN);
-
-if(empty($motifs)) {
-    $motifs = ['Consultation de contrôle', 'Détartrage', 'Urgence (douleur)', 'Blanchiment'];
-}
+// 1. Récupération des services
+$stmt_services = $pdo->query("SELECT id, nom, duree_minutes FROM services ORDER BY nom ASC");
+$services_list = $stmt_services->fetchAll(PDO::FETCH_ASSOC);
 
 // 2. Paramètres des créneaux
 $debut = "09:00";
 $fin = "18:00";
-$intervalle = 30; 
+$pas_affichage = 30; 
 
-// 3. Logique de vérification des disponibilités
 $date_selectionnee = $_GET['date'] ?? null;
-$creneaux_occupes = [];
+$motif_selectionne = $_GET['motif'] ?? null;
+$rdvs_existants = [];
 
 if ($date_selectionnee) {
-    // Récupère les heures déjà prises pour cette date (sauf les annulés)
-    $stmt = $pdo->prepare("SELECT DATE_FORMAT(date, '%H:%i') as heure_rdv FROM rendez_vous WHERE DATE(date) = ? AND statut != 'annulé'");
-    $stmt->execute([$date_selectionnee]);
-    $creneaux_occupes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    // On récupère les RDV avec leur heure de début et de fin calculée
+    $sql = "SELECT 
+                DATE_FORMAT(r.date, '%H:%i') as heure_debut, 
+                DATE_FORMAT(DATE_ADD(r.date, INTERVAL s.duree_minutes MINUTE), '%H:%i') as heure_fin
+            FROM rendez_vous r
+            JOIN services s ON r.id_acte = s.id
+            WHERE DATE(r.date) = ? AND r.statut != 'annulé'";
     
-    // Formatage HH:MM
-    $creneaux_occupes = array_map(function($h) { return substr($h, 0, 5); }, $creneaux_occupes);
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$date_selectionnee]);
+    $rdvs_existants = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
 
@@ -35,7 +35,7 @@ if ($date_selectionnee) {
             
             <div class="text-center mb-5">
                 <h1 class="display-4 fw-bold text-dark">Prendre rendez-vous</h1>
-                <p class="lead text-muted">Choisissez votre créneau en quelques clics.</p>
+                <p class="lead text-muted">Choisissez votre soin et votre créneau horaire.</p>
             </div>
 
             <div class="card border-0 shadow-lg rounded-5 overflow-hidden">
@@ -45,38 +45,27 @@ if ($date_selectionnee) {
                         <h4 class="fw-bold mb-4">Infos pratiques</h4>
                         <ul class="list-unstyled">
                             <li class="mb-4 d-flex align-items-start">
-                                <span class="me-3">✅</span>
-                                <div><strong>Confirmation immédiate</strong><br><small class="opacity-75">Votre RDV est réservé instantanément.</small></div>
+                                <span class="me-3">🕒</span>
+                                <div><strong>Durée garantie</strong><br><small class="opacity-75">Le système réserve automatiquement la durée nécessaire pour votre soin.</small></div>
                             </li>
                             <li class="mb-4 d-flex align-items-start">
-                                <span class="me-3">🕒</span>
-                                <div><strong>Durée du soin</strong><br><small class="opacity-75">Prévoyez environ 30 minutes.</small></div>
+                                <span class="me-3">✅</span>
+                                <div><strong>Confirmation</strong><br><small class="opacity-75">Votre rendez-vous est confirmé instantanément après validation.</small></div>
                             </li>
                         </ul>
                     </div>
 
                     <div class="col-md-8 p-5 bg-white">
-                        <?php if (isset($_GET['error']) && $_GET['error'] === 'closed'): ?>
-                            <div class="alert alert-danger shadow-sm border-0 rounded-4 px-4 py-3 mb-4" role="alert">
-                            <div class="d-flex align-items-center">
-                            <span class="fs-3 me-3">📍</span>
-                    <div>
-                            <strong>Cabinet fermé :</strong> Le Dr. Dupont ne consulte pas à la date sélectionnée. 
-                            Veuillez choisir un autre jour.
-                </div>
-            </div>
-        </div>
-    <?php endif; ?>
                         <form action="index.php?page=rdv-valid" method="POST">
-                            
                             <div class="row">
                                 <div class="col-12 mb-4">
                                     <label class="form-label fw-bold">1. Motif de consultation</label>
                                     <select name="motif" id="motif_select" class="form-select border-light bg-light rounded-3" required>
                                         <option value="" selected disabled>Quel est l'objet de votre visite ?</option>
-                                        <?php foreach($motifs as $m): ?>
-                                            <option value="<?= htmlspecialchars($m) ?>" <?= (isset($_GET['motif']) && $_GET['motif'] == $m) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($m) ?>
+                                        <?php foreach($services_list as $s): ?>
+                                            <option value="<?= $s['id'] ?>" 
+                                                <?= ($motif_selectionne == $s['id']) ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($s['nom']) ?> (⏳ <?= $s['duree_minutes'] ?> min)
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
@@ -87,44 +76,68 @@ if ($date_selectionnee) {
                                     <input type="date" name="date_rdv" id="date_rdv" 
                                            class="form-control border-light bg-light rounded-3" 
                                            min="<?= date('Y-m-d') ?>" 
-                                           value="<?= $date_selectionnee ?>" required>
+                                           value="<?= htmlspecialchars($date_selectionnee) ?>" required>
                                 </div>
 
                                 <div class="col-12 mb-4">
                                     <label class="form-label fw-bold">3. Heure disponible</label>
-                                    
                                     <div class="d-flex flex-wrap gap-2" id="container-creneaux">
                                         <?php if (!$date_selectionnee): ?>
                                             <div class="alert alert-info w-100 border-0 rounded-4">
-                                                👋 Veuillez d'abord choisir une date pour voir les disponibilités.
+                                                👋 Veuillez d'abord choisir une date.
                                             </div>
                                         <?php else: ?>
                                             <?php 
+                                            // DETERMINATION DE LA DURÉE DU SOIN CHOISI
+                                            $duree_soin_choisi = 30; 
+                                            if ($motif_selectionne) {
+                                                foreach($services_list as $s) {
+                                                    if($s['id'] == $motif_selectionne) {
+                                                        $duree_soin_choisi = (int)$s['duree_minutes'];
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
                                             $current = strtotime($debut);
                                             $end = strtotime($fin);
+
                                             while ($current < $end): 
-                                                $time = date("H:i", $current);
-                                                $est_occupe = in_array($time, $creneaux_occupes);
+                                                $time_str = date("H:i", $current);
+                                                // Calcul de la fin théorique pour ce créneau
+                                                $timestamp_fin_potentielle = strtotime("+$duree_soin_choisi minutes", $current);
+                                                $time_fin_potentielle = date("H:i", $timestamp_fin_potentielle);
+                                                
+                                                $est_occupe = false;
+
+                                                foreach ($rdvs_existants as $rdv) {
+                                                    // Règle d'or du chevauchement :
+                                                    // (Nouveau_Début < Existant_Fin) ET (Nouveau_Fin > Existant_Début)
+                                                    if ($time_str < $rdv['heure_fin'] && $time_fin_potentielle > $rdv['heure_debut']) {
+                                                        $est_occupe = true;
+                                                        break;
+                                                    }
+                                                }
+
+                                                // Empêcher de déborder sur l'heure de fermeture du cabinet
+                                                if ($timestamp_fin_potentielle > strtotime($fin)) {
+                                                    $est_occupe = true;
+                                                }
                                             ?>
                                                 <input type="radio" class="btn-check" name="heure_rdv" 
-                                                       id="time_<?= $time ?>" value="<?= $time ?>" 
+                                                       id="time_<?= $time_str ?>" value="<?= $time_str ?>" 
                                                        required <?= $est_occupe ? 'disabled' : '' ?>>
                                                 
                                                 <label class="btn <?= $est_occupe ? 'btn-light text-decoration-line-through opacity-50' : 'btn-outline-primary' ?> rounded-pill px-3" 
-                                                       for="time_<?= $time ?>">
-                                                    <?= $time ?>
+                                                       for="time_<?= $time_str ?>">
+                                                    <?= $time_str ?>
                                                 </label>
                                             <?php 
-                                                $current = strtotime("+$intervalle minutes", $current);
+                                                $current = strtotime("+$pas_affichage minutes", $current);
                                             endwhile; 
                                             ?>
                                         <?php endif; ?>
                                     </div>
-                                </div>
-
-                                <div class="col-12 mb-4">
-                                    <label class="form-label fw-bold">Message (optionnel)</label>
-                                    <textarea name="message" rows="2" class="form-control border-light bg-light rounded-3" placeholder="Informations complémentaires..."></textarea>
                                 </div>
                             </div>
 
@@ -135,7 +148,6 @@ if ($date_selectionnee) {
                             </div>
                         </form>
                     </div>
-
                 </div>
             </div>
         </div>
@@ -143,18 +155,21 @@ if ($date_selectionnee) {
 </main>
 
 <script>
-// Script pour recharger les disponibilités quand la date change
-document.getElementById('date_rdv').addEventListener('change', function() {
-    const date = this.value;
+// Amélioration du script pour recharger avec date ET motif
+function updateSelection() {
+    const date = document.getElementById('date_rdv').value;
     const motif = document.getElementById('motif_select').value;
     if(date) {
-        // Recharge la page avec la date en paramètre pour filtrer les créneaux occupés
-        window.location.href = "index.php?page=prendre-rdv&date=" + date + "&motif=" + motif;
+        window.location.href = "index.php?page=prendre-rdv&date=" + date + (motif ? "&motif=" + motif : "");
     }
-});
+}
+
+document.getElementById('date_rdv').addEventListener('change', updateSelection);
+document.getElementById('motif_select').addEventListener('change', updateSelection);
 </script>
 
 <style>
+    /* Votre style reste identique pour ne pas casser le visuel */
     .btn-check:checked + .btn-outline-primary {
         background-color: #0d6efd !important;
         color: white !important;
@@ -167,10 +182,10 @@ document.getElementById('date_rdv').addEventListener('change', function() {
         color: #495057;
     }
     .btn-light.text-decoration-line-through {
-        cursor: not-allowed;
         background: #f8f9fa;
         border-color: #eee;
         color: #adb5bd;
+        cursor: not-allowed;
     }
 </style>
 
